@@ -1,0 +1,32 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "train.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "code/maddpg/experiments/train.py",
+            "console": "integratedTerminal",
+            "args": "--scenario circle_sandbox --max-episode-len 80 --num-episodes 5000 --save-rate 200 --save-dir ./test_circle_sandbox/ --display"
+        },
+        {
+            "name": "nodisplay train.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "code/maddpg/experiments/train.py",
+            "console": "integratedTerminal",
+            "args": "--scenario circle_sandbox --max-episode-len 80 --num-episodes 5000 --save-rate 200 --save-dir ./test_circle_sandbox/"
+        },
+        {
+            "name": "eval",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "code/maddpg/experiments/train.py",
+            "console": "integratedTerminal",
+            "args": "--scenario circle_sandbox --load-dir ./test_circle_sandbox/ --display"
+        }
+    ]
+}
