@@ -106,40 +106,41 @@ class Scenario(BaseScenario):
     
     def find_agent_by_id(self, world, id:int):
         return next((a for a in world.agents if a.id == id), None)
+    
+    def estimate_target_pos(self, agent, target):
+        return self.estimate_target_pos_1(agent, target)
 
-    # def estimate_target_pos(self, agent, target, coef=2.):
-    #     return target.prev_state.p_pos - (target.prev_state.speed * coef)
-    
-    # def estimate_target_pos(self, agent, target, coef=2.):
-    #     return target.state.p_pos - (target.state.p_vel * coef)
-    
-    def estimate_target_pos(self, agent, target, coef=2.):
+    def estimate_target_pos_1(self, agent, target, coef=2.):
         return target.state.p_pos
 
-    # def estimate_target_pos(self, agent, target, coef=.1):
-    #     delta = target.state.p_pos - agent.state.p_pos
-    #     mag = np.linalg.norm(delta)
-    #     new_target = target.state.p_pos - (coef * delta / mag)
-    #     new_mag = dist(target.state.p_pos, new_target)
-
-    #     # print(mag, new_mag)
-    #     # new_angle = self.get_angle(delta, new_target - agent.state.p_pos)
-    #     # assert(math.isclose(new_mag, coef))
-    #     # assert(math.isclose(new_angle, 0))
-    #     return new_target
+    def estimate_target_pos_2(self, agent, target, coef=4.):
+        return target.prev_state.p_pos - (target.prev_state.speed * coef)
     
-    # def estimate_target_pos(self, agent, target, coef=.2):
-    #     p_vel_mag = np.linalg.norm(target.state.p_vel)
-    #     p_vel_u = target.state.p_vel / p_vel_mag
-    #     new_vel = -coef * p_vel_u
-    #     new_pos = target.state.p_pos + new_vel
-
-    #     # new_mag = dist(target.state.p_pos, new_pos)
-    #     # new_angle = self.get_angle(target.state.p_vel, new_vel)
-    #     # # print(new_angle, new_mag)
-    #     # assert(math.isclose(new_mag, coef, rel_tol= 0.01))
-    #     # assert(math.isclose(new_angle, math.pi, rel_tol = 0.01))
-    #     return new_pos
+    def estimate_target_pos_3(self, agent, target, coef=2.):
+        return target.state.p_pos - (target.state.p_vel * coef)
+    
+    def estimate_target_pos_4(self, agent, target, coef=.1):
+        delta = target.state.p_pos - agent.state.p_pos
+        mag = np.linalg.norm(delta)
+        new_target = target.state.p_pos - (coef * delta / mag)
+        new_mag = dist(target.state.p_pos, new_target)
+        # print(mag, new_mag)
+        # new_angle = self.get_angle(delta, new_target - agent.state.p_pos)
+        # assert(math.isclose(new_mag, coef))
+        # assert(math.isclose(new_angle, 0))
+        return new_target
+    
+    def estimate_target_pos_5(self, agent, target, coef=.2):
+        p_vel_mag = np.linalg.norm(target.state.p_vel)
+        p_vel_u = target.state.p_vel / p_vel_mag
+        new_vel = -coef * p_vel_u
+        new_pos = target.state.p_pos + new_vel
+        # new_mag = dist(target.state.p_pos, new_pos)
+        # new_angle = self.get_angle(target.state.p_vel, new_vel)
+        # # print(new_angle, new_mag)
+        # assert(math.isclose(new_mag, coef, rel_tol= 0.01))
+        # assert(math.isclose(new_angle, math.pi, rel_tol = 0.01))
+        return new_pos
 
     def get_angle(self, v1, v2):
         v1_mag = np.linalg.norm(v1)
@@ -171,6 +172,10 @@ class Scenario(BaseScenario):
     def fix_agent_vel(self, agent):
         if agent.state.p_vel[0] == 0 and agent.state.p_vel[1] == 0 and hasattr(agent.state, "speed"):
             agent.state.p_vel = agent.state.speed
+        if agent.state.p_vel[0] == 0:
+            agent.state.p_vel[0] == 0.00001
+        if agent.state.p_vel[1] == 0:
+            agent.state.p_vel[1] == 0.00001
 
     def reward(self, agent, world):
         target_id = agent.id-1
@@ -186,13 +191,14 @@ class Scenario(BaseScenario):
         else:
             target_pos = self.estimate_target_pos(agent, target)
             d = dist(agent.state.p_pos, target_pos)
-            angle, mag = self.get_angle(target.state.p_vel, agent.state.p_vel)
-            reward = .7 * -math.log(d) + .15 * -math.log(abs(angle)) + .15 * -math.log(mag)
+            d_norm = -math.log(d)   
+            cos_sim = max(0, self.cos_sim(target.state.p_vel, agent.state.p_vel))
+            reward = .7 * d_norm + .3 * cos_sim
         return reward
 
     def observation(self, agent, world):
-        dx, dy, dv_mag, dv_angle = 0, 0, 0, 0
-        lm_dx, lm_dy, lm_act = 0, 0, 0
+        d_pos, lm_d_pos = np.array([0, 0]), np.array([0, 0])
+        dv_mag, dv_angle, lm_act = 0, 0, 0
         target_id = agent.id-1
 
         # target distance
@@ -200,21 +206,19 @@ class Scenario(BaseScenario):
         if target:
             self.fix_agent_vel(target)
             # delta x/y
-            dx = target.state.p_pos[0] - agent.state.p_pos[0]
-            dy = target.state.p_pos[1] - agent.state.p_pos[1]
-            
+            d_pos = target.state.p_pos - agent.state.p_pos
+
             # delta vel
             dv_angle, dv_mag = self.get_angle(target.state.p_vel, agent.state.p_vel)
             
         # agent's goal
         lm = self.find_entity_by_name(world, f"Goal {target_id}")
         if lm:
-            lm_dx = lm.state.p_pos[0] - agent.state.p_pos[0]
-            lm_dy = lm.state.p_pos[1] - agent.state.p_pos[1]
+            lm_d_pos = lm.state.p_pos - agent.state.p_pos
             lm_act = int(lm.activate == True)
         
         # return the complete state
-        return np.array([dx, dy, dv_angle, dv_mag, lm_dx, lm_dy, lm_act])
+        return np.array([d_pos[0], d_pos[1], dv_angle, dv_mag, lm_d_pos[0], lm_d_pos[1], lm_act])
 
     def create_leader_callback(self):
         # this functions defines the trajectory of the leader to be followed;
