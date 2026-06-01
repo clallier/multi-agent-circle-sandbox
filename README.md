@@ -1,6 +1,6 @@
 # Multi-Agent Reinforcement Learning Experiment (Carousel v2)
 
-Welcome to the **technical-exercice-carousel-v2** project. This repository contains an experiment focused on Multi-Agent Reinforcement Learning (MARL). Specifically, it utilizes the Multi-Agent Deep Deterministic Policy Gradient (MADDPG) algorithm to train multiple agents in a custom particle-based sandbox environment.
+Welcome to the **multi-agent-maddpg-sandbox** project. This repository contains an experiment focused on Multi-Agent Reinforcement Learning (MARL). Specifically, it utilizes the Multi-Agent Deep Deterministic Policy Gradient (MADDPG) algorithm to train multiple agents in a custom particle-based sandbox environment.
 
 ## Overview
 
