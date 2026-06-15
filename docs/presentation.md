@@ -104,7 +104,7 @@ table > thead:has(> tr > th:empty):not(:has(> tr > th:not(:empty))) {
 ---
 ### **Observations** example (Exp. 8)
 ```python
-target_id = agent.id-1
+target_id = agent.id - 1
 
 # target distance
 target = self.find_agent_by_id(world, target_id)
@@ -114,20 +114,28 @@ if target:
     d_pos = target.state.p_pos - agent.state.p_pos
     # delta vel
     dv_angle, dv_mag = self.get_angle(target.state.p_vel, agent.state.p_vel)
-    
+
 # agent's goal
 lm = self.find_entity_by_name(world, f"Goal {target_id}")
 if lm:
     lm_d_pos = lm.state.p_pos - agent.state.p_pos
-    lm_act = int(lm.activate == True)
+    lm_act = int(lm.activate)
 
-return np.array([d_pos[0], d_pos[1], dv_angle, dv_mag, lm_d_pos[0], lm_d_pos[1], lm_act])
+return np.array([
+    d_pos[0],
+    d_pos[1],
+    dv_angle,
+    dv_mag,
+    lm_d_pos[0],
+    lm_d_pos[1],
+    lm_act,
+])
 ```
 ---
 ### **Rewards** example (Exp. 8)
 
 ```python
-target_id = agent.id-1
+target_id = agent.id - 1
 target = self.find_agent_by_id(world, target_id)
 
 # if the goal is activated, try to get it
@@ -141,7 +149,7 @@ else:
     target_pos = self.estimate_target_pos(agent, target)
     d = dist(agent.state.p_pos, target_pos)
     angle, mag = self.get_angle(target.state.p_vel, agent.state.p_vel)
-    reward = .7 * -math.log(d) + .15 * -math.log(abs(angle)) + .15 * -math.log(mag)
+    reward = 0.7 * -math.log(d) + 0.15 * -math.log(abs(angle)) + 0.15 * -math.log(mag)
 return reward
 ```
 ---
