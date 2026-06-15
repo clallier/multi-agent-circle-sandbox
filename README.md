@@ -17,18 +17,17 @@ The project code is divided into two main sub-directories:
 
 Before starting, ensure you have the following installed:
 
-*   Python (3.5+)
-*   `pip` (Python package installer)
+*   [uv](https://github.com/astral-sh/uv) (for environment and dependency management)
 
-## Installation
+## Installation & Setup
 
 Follow these steps to set up the project:
 
-1.  **Clone the repository** (if you haven't already) and navigate to the project root directory.
-2.  **Install the dependencies** using the provided `requirements.txt` file. This will install required packages like TensorFlow, NumPy, Pyglet, and also install the local `maddpg` and `multiagent-particle-envs` packages in editable mode.
+1.  **Clone the repository** and navigate to the project root directory.
+2.  **Sync the environment** using `uv`. This will automatically download the correct Python version (3.9) and install all dependencies (including native macOS Apple Silicon compatibility for TensorFlow and setting up the subprojects in editable mode):
 
     ```bash
-    pip install -r requirements.txt
+    uv sync
     ```
 
 ## How It Works
@@ -42,10 +41,13 @@ The environment consists of a continuous observation and discrete action space w
 
 ### 1. Training
 
-To start training the agents on the `circle_sandbox` scenario, run the following command. The models and training states will be saved in the `./test_circle_sandbox/` directory.
+To start training the agents (e.g. on scenario 9), run the following command. The models and training states will be saved in the `./test_circle_sandbox_9/` directory.
+
+> [!NOTE]
+> We set the environment variable `KERAS_HOME=./.keras` to redirect cache files to a writable workspace directory to avoid sandbox/permission warnings.
 
 ```bash
-python code/maddpg/experiments/train.py --scenario circle_sandbox --max-episode-len 80 --num-episodes 5000 --save-rate 200 --save-dir ./test_circle_sandbox/
+KERAS_HOME=./.keras uv run python code/maddpg/experiments/train.py --scenario circle_sandbox_9 --max-episode-len 80 --num-episodes 5000 --save-rate 200 --save-dir ./test_circle_sandbox_9/
 ```
 
 ### 2. Evaluation
@@ -53,15 +55,15 @@ python code/maddpg/experiments/train.py --scenario circle_sandbox --max-episode-
 To evaluate the trained agents and display their behavior visually, use the `--display` flag and point to the directory where the model was saved:
 
 ```bash
-python code/maddpg/experiments/train.py --scenario circle_sandbox --load-dir ./test_circle_sandbox/ --display
+KERAS_HOME=./.keras uv run python code/maddpg/experiments/train.py --scenario circle_sandbox_9 --load-dir ./test_circle_sandbox_9/ --display
 ```
 
 ### 3. Monitoring Training with TensorBoard
 
-You can monitor the training progress, including rewards and losses, using TensorBoard. Run the following command, pointing `--logdir` to your save directory:
+You can monitor the training progress, including rewards and losses, using TensorBoard. Run the following command:
 
 ```bash
-tensorboard --logdir=./test_circle_sandbox
+KERAS_HOME=./.keras uv run tensorboard --logdir ./test_circle_sandbox_9/
 ```
 *(Once running, open the provided localhost link in your web browser to view the dashboard).*
 
@@ -70,7 +72,7 @@ tensorboard --logdir=./test_circle_sandbox
 For a full list of command-line options available for training and environment configuration, you can use the help flag:
 
 ```bash
-python code/maddpg/experiments/train.py --help
+uv run python code/maddpg/experiments/train.py --help
 ```
 
 *Note: New scenario scripts should be defined in the `code/multiagent-particle-envs/multiagent/scenarios/` directory.*

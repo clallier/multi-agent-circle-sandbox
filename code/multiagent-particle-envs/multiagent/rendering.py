@@ -60,7 +60,10 @@ class Viewer(object):
         glEnable(GL_LINE_SMOOTH)
         # glHint(GL_LINE_SMOOTH_HINT, GL_DONT_CARE)
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
-        glLineWidth(2.0)
+        try:
+            glLineWidth(1.0)
+        except Exception:
+            pass
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     def close(self):
@@ -211,7 +214,10 @@ class LineWidth(Attr):
     def __init__(self, stroke):
         self.stroke = stroke
     def enable(self):
-        glLineWidth(self.stroke)
+        try:
+            glLineWidth(1.0)
+        except Exception:
+            pass
 
 class Point(Geom):
     def __init__(self):

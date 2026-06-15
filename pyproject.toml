@@ -1,0 +1,23 @@
+[project]
+name = "multi-agent-circle-sandbox"
+version = "0.1.0"
+description = "Multi-agent circle sandbox training using MADDPG"
+readme = "README.md"
+requires-python = ">=3.9,<3.11"
+dependencies = [
+    "tensorflow-macos>=2.13.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "tensorflow>=2.13.0; sys_platform != 'darwin' or platform_machine != 'arm64'",
+    "numpy>=1.22.0,<2",
+    "tf-slim",
+    "pyglet==1.5.27",
+    "setuptools<70",
+    "maddpg",
+    "multiagent",
+]
+
+[tool.uv.sources]
+maddpg = { path = "code/maddpg", editable = true }
+multiagent = { path = "code/multiagent-particle-envs", editable = true }
+
+[tool.ruff.format]
+preview = true

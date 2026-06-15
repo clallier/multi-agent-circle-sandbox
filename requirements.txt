@@ -1,6 +1,0 @@
-tensorflow==2.4.0
-numpy==1.19.5
-tf_slim
-pyglet==1.5.27
--e ./code/maddpg
--e ./code/multiagent-particle-envs

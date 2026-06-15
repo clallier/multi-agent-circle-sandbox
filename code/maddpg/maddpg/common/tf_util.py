@@ -29,7 +29,7 @@ def softmax(x, axis=None):
 
 
 def is_placeholder(x):
-    return type(x) is tf.Tensor and len(x.op.inputs) == 0
+    return isinstance(x, tf.Tensor) and len(x.op.inputs) == 0
 
 # ================================================================
 # Inputs
@@ -227,6 +227,14 @@ def load_state(fname, saver=None):
     """Load all the variables to the current session from the location <fname>"""
     if saver is None:
         saver = tf.compat.v1.train.Saver()
+    import os
+    if os.path.isdir(fname):
+        ckpt = tf.train.latest_checkpoint(fname)
+        if ckpt is not None:
+            if os.path.isdir(ckpt):
+                fname = os.path.join(fname, "")
+            else:
+                fname = ckpt
     saver.restore(get_session(), fname)
     return saver
 

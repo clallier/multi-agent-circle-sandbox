@@ -1,3 +1,6 @@
+import os
+os.environ.setdefault('KERAS_HOME', './.keras')
+
 import argparse
 import numpy as np
 import tensorflow as tf
@@ -74,6 +77,8 @@ def get_trainers(env, num_adversaries, obs_shape_n, arglist):
 
 def train(arglist):
     with tf.compat.v1.Session() as session:
+        if arglist.save_dir and not arglist.save_dir.endswith('/'):
+            arglist.save_dir += '/'
         os.makedirs(arglist.save_dir, exist_ok=True)
 
         env = make_env(arglist.scenario, arglist)
@@ -108,6 +113,8 @@ def train(arglist):
         # Load previous results, if necessary
         if arglist.load_dir == "":
             arglist.load_dir = arglist.save_dir
+        if arglist.load_dir and not arglist.load_dir.endswith('/'):
+            arglist.load_dir += '/'
         if arglist.display or arglist.restore or False:
             print('Loading previous state...')
             U.load_state(arglist.load_dir)
