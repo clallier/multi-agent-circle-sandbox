@@ -21,3 +21,10 @@ multiagent = { path = "code/multiagent-particle-envs", editable = true }
 
 [tool.ruff.format]
 preview = true
+
+[tool.pyright]
+extraPaths = [
+    "code/multiagent-particle-envs",
+    "code/maddpg"
+]
+
