@@ -12,7 +12,7 @@ This project aims to demonstrate and evaluate the coordination, cooperation, or 
 
 Over the course of 10 incremental experiments, the observation spaces, reward formulations, and agent behaviors were progressively refined to train a cooperative swarm of agents tracking a leader moving in a circle, avoiding collisions and adapting to active/inactive landmarks.
 
-| Exp. | Description / Objective | Observation Space Improvements | Reward Formulation | Training Length | Accumul. Reward | Visual Behavior |
+| Exp. | Description / Objective | Observation Space | Reward Formulation | Training Length | Accumul. Reward | Visual Behavior |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **1** | Single follower tracking a circular leader | Target relative position ($dx, dy$) | Logarithmic distance: $-\ln(d)$ | 5k episodes | 242.9 | <img src="docs/gifs/experiment_1.gif" width="180" /> |
 | **2** | Follower learning smooth matching | Target $dx, dy$ + follower velocity | Logarithmic distance: $-\ln(d)$ | 5k episodes | 311.5 | <img src="docs/gifs/experiment_2.gif" width="180" /> |
