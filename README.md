@@ -1,4 +1,4 @@
-# Multi-Agent Reinforcement Learning Experiment 
+# Multi-Agent Reinforcement Learning Sandbox
 
 ![](docs/gifs/experiment_5.gif)
 
@@ -13,8 +13,8 @@ This project aims to demonstrate and evaluate the coordination, cooperation, or 
 Over the course of 10 incremental experiments, the observation spaces, reward formulations, and agent behaviors were progressively refined to train a cooperative swarm of agents tracking a leader moving in a circle, avoiding collisions and adapting to active/inactive landmarks. 
 
 > [!NOTE]
-> - The training lengths are exprimed in episodes (each episode is 200 timesteps long).
-> - The Acc. Reward shows the accumulated rewards for each agents (so it can be divided by the number of agents to have the accumulated reward per agent)  
+> - The training lengths are expressed in episodes (each episode is 200 timesteps long).
+> - The Acc. Reward shows the accumulated rewards for all agents (which can be divided by the number of agents to get the average accumulated reward per agent).
 
 | Exp. | Description Objective | Observation Space | Reward Formulation | Training Length (ep.) | Acc. Reward | Visual Behavior |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -66,8 +66,8 @@ Follow these steps to set up the project:
 
 ## How It Works
 
-The environment consists of a continuous observation and discrete action space where agents interact based on basic simulated physics.
-1.  **Environment Generation:** The `multiagent-particle-envs` directory defines the world, including agents, landmarks, and rules of the specific scenario.
+The environment consists of a continuous observation space and a discrete action space where agents interact based on basic simulated physics.
+1.  **Environment Generation:** The `multiagent-particle-envs` directory defines the world, including agents, landmarks, and the rules of the specific scenario.
 2.  **Training:** The `train.py` script initializes the environment and the MADDPG trainer. During training, agents explore the environment, collect experiences, and update their policies to maximize their rewards over time.
 3.  **Evaluation:** Once trained, the saved models can be loaded to visually evaluate the agents' learned behaviors without further training.
 
@@ -87,7 +87,7 @@ To start training the agents (e.g. on scenario 9), run the following command. Th
 KERAS_HOME=./.keras uv run python code/maddpg/experiments/train.py --scenario circle_sandbox_9 --max-episode-len 80 --num-episodes 5000 --save-rate 200 --save-dir ./test_circle_sandbox_9/
 ```
 
-The script `scripts/record_scenarios.py` permits to run train all the experiments (then export videos and gifs) for the scenarios defined in the inner config:
+The script `scripts/record_scenarios.py` automates the training of all experiments (and exports videos and GIFs) for the scenarios defined in the inner config:
 
 ```python
 # Scenario configs: (scenario_id, episodes)
