@@ -20,7 +20,7 @@ Over the course of 10 incremental experiments, the observation spaces, reward fo
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **1** | Single follower tracking a circular leader | Target relative position ($dx, dy$) | Logarithmic distance: $-\ln(d)$ | 5k | 242.9 | <img src="docs/gifs/experiment_1.gif" width="180" /> |
 | **2** | Follower learning smooth matching | Target $dx, dy$ + follower velocity | Logarithmic distance: $-\ln(d)$ | 5k | 311.5 | <img src="docs/gifs/experiment_2.gif" width="180" /> |
-| **3** | Single follower + 1 active/inactive goal | Same + goal $dx, dy, state$ | Logarithmic distance to target/goal | 5k | 157.4 | <img src="docs/gifs/experiment_3.gif" width="180" /> |
+| **3** | Single follower + 1 active/inactive goal | Same + goal (dx, dy, state) | Logarithmic distance to target/goal | 5k | 157.4 | <img src="docs/gifs/experiment_3.gif" width="180" /> |
 | **4** | Single follower + leader future position estimation | Same as Exp. 3 | Logarithmic distance to estimated future position | 5k | 146.1 | <img src="docs/gifs/experiment_4.gif" width="180" /> |
 | **5** | Chain of 2 followers + 2 active/inactive goals | Same as Exp. 3 | Same as Exp. 3 | 25k | 397.5 | <img src="docs/gifs/experiment_5.gif" width="180" /> |
 | **6** | Chain of 2 followers + velocity alignment reward | Target $dx, dy$ + goal info + velocity differences | Weighted: $0.7 \cdot \text{distance}$ + $0.3 \cdot \text{cos-sim}(v_{\text{agent}}, v_{\text{target}})$ | 10k | 301.1 | <img src="docs/gifs/experiment_6.gif" width="180" /> |
