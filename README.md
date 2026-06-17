@@ -14,16 +14,16 @@ Over the course of 10 incremental experiments, the observation spaces, reward fo
 
 | Exp. | Description / Objective | Observation Space Improvements | Reward Formulation | Training Length | Accumulated Reward | Visual Behavior |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1** | Single follower tracking a circular leader | Target relative position ($dx, dy$) | Logarithmic distance: $-\ln(d)$ | 5k episodes | 242.9 | ![](docs/gifs/experiment_1.gif) |
-| **2** | Follower learning smooth matching | Target $dx, dy$ + follower velocity | Logarithmic distance: $-\ln(d)$ | 5k episodes | 311.5 | ![](docs/gifs/experiment_2.gif) |
-| **3** | Single follower + 1 active/inactive goal | Same + goal $dx, dy, state$ | Logarithmic distance to target/goal | 5k episodes | 157.4 | ![](docs/gifs/experiment_3.gif) |
-| **4** | Single follower + leader future position estimation | Same as Exp. 3 | Logarithmic distance to estimated future position | 5k episodes | 146.1 | ![](docs/gifs/experiment_4.gif) |
-| **5** | Chain of 2 followers + 2 active/inactive goals | Same as Exp. 3 | Same as Exp. 3 | 25k episodes | 397.5 | ![](docs/gifs/experiment_5.gif) |
-| **6** | Chain of 2 followers + velocity alignment reward | Target $dx, dy$ + goal info + velocity differences | Weighted: $0.7 \cdot \text{distance}$ + $0.3 \cdot \text{cos-sim}(v_{\text{agent}}, v_{\text{target}})$ | 10k episodes | 301.1 | ![](docs/gifs/experiment_6.gif) |
-| **7** | Chain of 3 followers + 3 goals + chain velocity alignment | Same as Exp. 6 | Same as Exp. 6 | 20k episodes | 541.4 | ![](docs/gifs/experiment_7.gif) |
-| **8** | Chain of 3 followers + 3 goals + shared active goal + random leader speed | Same as Exp. 6 | Same as Exp. 6 | 100k episodes | 494.4 | ![](docs/gifs/experiment_8.gif) |
-| **9** | Chain of 3 followers + 3 goals + Bounded Exponential Decay rewards | Same as Exp. 6 | Same as Exp. 6 with Bounded Exponential Decay: $e^{-d/\sigma_d}$ | 100k episodes | 166.0 | ![](docs/gifs/experiment_9.gif) |
-| **10** | Chain of 3 followers + 3 goals + mutual agent collision awareness | Same as Exp. 6 + other agents pos/vel | Same as Exp. 6 with Bounded Exponential Decay | 100k episodes | 167.3 | ![](docs/gifs/experiment_10.gif) |
+| **1** | Single follower tracking a circular leader | Target relative position ($dx, dy$) | Logarithmic distance: $-\ln(d)$ | 5k episodes | 242.9 | <img src="docs/gifs/experiment_1.gif" width="180" /> |
+| **2** | Follower learning smooth matching | Target $dx, dy$ + follower velocity | Logarithmic distance: $-\ln(d)$ | 5k episodes | 311.5 | <img src="docs/gifs/experiment_2.gif" width="180" /> |
+| **3** | Single follower + 1 active/inactive goal | Same + goal $dx, dy, state$ | Logarithmic distance to target/goal | 5k episodes | 157.4 | <img src="docs/gifs/experiment_3.gif" width="180" /> |
+| **4** | Single follower + leader future position estimation | Same as Exp. 3 | Logarithmic distance to estimated future position | 5k episodes | 146.1 | <img src="docs/gifs/experiment_4.gif" width="180" /> |
+| **5** | Chain of 2 followers + 2 active/inactive goals | Same as Exp. 3 | Same as Exp. 3 | 25k episodes | 397.5 | <img src="docs/gifs/experiment_5.gif" width="180" /> |
+| **6** | Chain of 2 followers + velocity alignment reward | Target $dx, dy$ + goal info + velocity differences | Weighted: $0.7 \cdot \text{distance}$ + $0.3 \cdot \text{cos-sim}(v_{\text{agent}}, v_{\text{target}})$ | 10k episodes | 301.1 | <img src="docs/gifs/experiment_6.gif" width="180" /> |
+| **7** | Chain of 3 followers + 3 goals + chain velocity alignment | Same as Exp. 6 | Same as Exp. 6 | 20k episodes | 541.4 | <img src="docs/gifs/experiment_7.gif" width="180" /> |
+| **8** | Chain of 3 followers + 3 goals + shared active goal + random leader speed | Same as Exp. 6 | Same as Exp. 6 | 100k episodes | 494.4 | <img src="docs/gifs/experiment_8.gif" width="180" /> |
+| **9** | Chain of 3 followers + 3 goals + Bounded Exponential Decay rewards | Same as Exp. 6 | Same as Exp. 6 with Bounded Exponential Decay: $e^{-d/\sigma_d}$ | 100k episodes | 166.0 | <img src="docs/gifs/experiment_9.gif" width="180" /> |
+| **10** | Chain of 3 followers + 3 goals + mutual agent collision awareness | Same as Exp. 6 + other agents pos/vel | Same as Exp. 6 with Bounded Exponential Decay | 100k episodes | 167.3 | <img src="docs/gifs/experiment_10.gif" width="180" /> |
 
 ### Takeaways
 1. **Follower Self-Velocity (Exp 1 vs. 2):** Including the follower's own velocity in the observation space directly improved tracking quality, increasing the accumulated reward from 242.9 to 311.5 by allowing the agent to perform smoother velocity matching.
