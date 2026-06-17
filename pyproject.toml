@@ -13,6 +13,7 @@ dependencies = [
     "setuptools<70",
     "maddpg",
     "multiagent",
+    "opencv-python",
 ]
 
 [tool.uv.sources]

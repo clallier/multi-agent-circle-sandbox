@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Local Caches
+.matplotlib/
+.keras/
+
+# TensorBoard and Local Training Runs
+test_circle_sandbox*/
+test_circle_sandbox_*/
+tb_logs/
+
+# IDE settings
+.vscode/
+.idea/
+.DS_Store
+
+# Docs and Presentation assets
+docs/assets/
+docs/presentation.*
+

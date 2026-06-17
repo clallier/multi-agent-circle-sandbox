@@ -4,7 +4,10 @@ from multiagent.scenarios.circle_sandbox_base import CircleSandboxBaseScenario
 
 
 class Scenario(CircleSandboxBaseScenario):
-    """Scenario representing experiment 4, following estimated target positions when goal is inactive."""
+    """Scenario representing experiment 4, following estimated target positions when goal is inactive.
+
+    Compared to experiment 3, the agent's reward has been modified to estimate the leader's position in the future based on its velocity.
+    """
 
     def __init__(self):
         super().__init__()
@@ -17,7 +20,7 @@ class Scenario(CircleSandboxBaseScenario):
         leader = world.agents[0]
 
         # if the goal is activated, try to get it
-        lm0 = self.find_entity_by_name(world, "Goal 0")
+        lm0 = self.find_entity_by_name(world, "goal_0")
         if lm0 and lm0.activate:
             a_dist = self.dist(agent.state.p_pos, lm0.state.p_pos)
         else:
@@ -41,7 +44,7 @@ class Scenario(CircleSandboxBaseScenario):
         dy = leader.state.p_pos[1] - agent.state.p_pos[1]
 
         # agent's goal
-        lm0 = self.find_entity_by_name(world, "Goal 0")
+        lm0 = self.find_entity_by_name(world, "goal_0")
         if lm0:
             lm0_dx = lm0.state.p_pos[0] - agent.state.p_pos[0]
             lm0_dy = lm0.state.p_pos[1] - agent.state.p_pos[1]
@@ -49,4 +52,3 @@ class Scenario(CircleSandboxBaseScenario):
 
         # return the complete state
         return np.array([vx, vy, dx, dy, lm0_dx, lm0_dy, lm0_act])
-

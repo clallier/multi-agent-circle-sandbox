@@ -4,7 +4,10 @@ from multiagent.scenarios.circle_sandbox_base import CircleSandboxBaseScenario
 
 
 class Scenario(CircleSandboxBaseScenario):
-    """Scenario representing experiment 2 with distance relative to leader velocity for observation."""
+    """Scenario representing experiment 2 with distance relative to leader velocity for observation.
+
+    Compared to experiment 1, the observation takes into account the next position of the leader (position + velocity * dt with dt=0.1).
+    """
 
     def __init__(self):
         super().__init__()
@@ -24,4 +27,3 @@ class Scenario(CircleSandboxBaseScenario):
         dx = leader.state.p_pos[0] + leader.state.speed[0] - agent.state.p_pos[0]
         dy = leader.state.p_pos[1] + leader.state.speed[1] - agent.state.p_pos[1]
         return np.array([dx, dy, agent.state.p_vel[0], agent.state.p_vel[1]])
-

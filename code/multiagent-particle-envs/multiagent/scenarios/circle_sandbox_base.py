@@ -59,17 +59,17 @@ class CircleSandboxBaseScenario(BaseScenario):
         # add agents
         world.agents = [Agent() for _ in range(self.nb_agents)]
         for i, agent in enumerate(world.agents):
-            agent.name = "agent %d" % i
+            agent.name = "agent_%d" % i
             agent.id = i
             agent.collide = True
-            agent.color = [1, 1, 0, 1]
+            agent.color = [1, 1, 0, 0.75]
             agent.silent = True
             agent.size = 0.1
 
         # add goals
         goals = [Landmark() for _ in range(self.nb_goals)]
         for i, goal in enumerate(goals):
-            goal.name = "Goal %d" % i
+            goal.name = "goal_%d" % i
             goal.type = "goal"
             goal.color = [1, 0, 0, 0.75]
             goal.collide = False
@@ -79,23 +79,54 @@ class CircleSandboxBaseScenario(BaseScenario):
         # add obstacles
         obstacles = [Landmark() for _ in range(self.nb_obstacles)]
         for i, obstacle in enumerate(obstacles):
-            obstacle.name = "Obstacle %d" % i
+            obstacle.name = "obstacle_%d" % i
             obstacle.type = "obstacle"
             obstacle.collide = True
             obstacle.movable = False
-            obstacle.color = [1, 0, 1, 1]
+            obstacle.color = [1, 1, 1, 0.75]
             obstacle.size = 0.1
 
         world.landmarks = goals + obstacles
 
         # Cache entities by name and agents by id for O(1) lookups
+        # pyrefly: ignore [missing-attribute]
         world._entities_by_name = {e.name: e for e in world.entities}
+        # pyrefly: ignore [missing-attribute]
         world._agents_by_id = {a.id: a for a in world.agents}
 
         # make initial conditions
         self.reset_world(world)
 
         return world
+
+    def configure_goal_timing(self, goal, i, total_goals):
+        """Configures the default activation, deactivation, and count tracking for a goal.
+
+        This centralizes the timing logic that controls when landmarks switch
+        activation states, preventing inconsistencies and allowing subclasses to customize.
+
+        Args:
+            goal (Landmark): The goal landmark to configure.
+            i (int): The 0-based index of the goal.
+            total_goals (int): Total number of goals in the environment.
+
+        Returns:
+            None: Modifies the goal landmark object in place.
+
+        Raises:
+            ValueError: If the goal parameters are invalid.
+
+        Examples:
+            >>> scenario.configure_goal_timing(goal, 0, 3)
+        """
+        base_activation_time = 20
+        goal.next_activate_time_min = 15
+        goal.next_activate_time_max = 25
+        goal.activate_time = i * base_activation_time + randrange(
+            goal.next_activate_time_min, goal.next_activate_time_max
+        )
+        goal.deactivation_time = (1 + total_goals) * base_activation_time
+        goal.activate_count = 1
 
     def reset_world(self, world):
         """Resets the state of the world and positions all entities.
@@ -117,7 +148,7 @@ class CircleSandboxBaseScenario(BaseScenario):
                 agent.action_callback = self.create_leader_callback()
                 agent.action_callback(agent, world)
                 agent.size = 0.1
-                agent.color = [0, 0, 1]
+                agent.color = [0, 0, 1, 0.75]
             else:
                 # others are learning agents
                 agent.size = 0.05
@@ -133,11 +164,10 @@ class CircleSandboxBaseScenario(BaseScenario):
             goal.color = np.array([0, 1, 0, 0.75])
             goal.activate = False
             # default activate_time setting, can be disabled/overridden in subclass
-            goal.activate_time = (i + 1) * 30 + randrange(5, 10)
-            goal.activate_count = 1
+            self.configure_goal_timing(goal, i, len(goals))
 
         for obstacle in obstacles:
-            obstacle.color = np.array([0, 1, 1, 1])
+            obstacle.color = np.array([1, 1, 1, 0.75])
             obstacle.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
             obstacle.state.p_vel = np.zeros(world.dim_p)
 
@@ -169,6 +199,20 @@ class CircleSandboxBaseScenario(BaseScenario):
             world._agents_by_id = {a.id: a for a in world.agents}
         return world._agents_by_id.get(id, None)
 
+    def get_last_active_landmark(self, world):
+        """Finds the first active goal landmark in the world.
+
+        Args:
+            world (World): The environment world.
+
+        Returns:
+            Landmark: The first active goal landmark if found, otherwise None.
+        """
+        last_landmark = None
+        for landmark in world.landmarks:
+            if landmark.type == "goal" and landmark.activate:
+                last_landmark = landmark
+        return last_landmark
 
     def estimate_target_pos(self, agent, target):
         """Estimates target position. Defaults to estimator 1.
@@ -183,15 +227,63 @@ class CircleSandboxBaseScenario(BaseScenario):
         return self.estimate_target_pos_1(agent, target)
 
     def estimate_target_pos_1(self, agent, target, coef=2.0):
+        """Estimates target position using target's current position directly.
+
+        This is the simplest baseline estimator returning target's exact position.
+
+        Args:
+            agent (Agent): Tracking agent.
+            target (Agent): Target agent to track.
+            coef (float, optional): Unused multiplier coefficient. Defaults to 2.0.
+
+        Returns:
+            np.ndarray: Estimated target position (same as target.state.p_pos).
+        """
         return target.state.p_pos
 
     def estimate_target_pos_2(self, agent, target, coef=4.0):
-        return target.prev_state.p_pos - (target.prev_state.speed * coef)
+        """Estimates target position by projecting backwards from target's previous position.
+
+        Uses the target's previous velocity vector scaled by coef to estimate a lagged position.
+
+        Args:
+            agent (Agent): Tracking agent.
+            target (Agent): Target agent to track.
+            coef (float, optional): Multiplier coefficient for velocity vector. Defaults to 4.0.
+
+        Returns:
+            np.ndarray: Estimated target position.
+        """
+        return target.prev_state.p_pos - (target.prev_state.p_vel * coef)
 
     def estimate_target_pos_3(self, agent, target, coef=2.0):
+        """Estimates target position by projecting backwards from target's current position.
+
+        Uses the target's current velocity vector scaled by coef to estimate a lagged position.
+
+        Args:
+            agent (Agent): Tracking agent.
+            target (Agent): Target agent to track.
+            coef (float, optional): Multiplier coefficient for velocity vector. Defaults to 2.0.
+
+        Returns:
+            np.ndarray: Estimated target position.
+        """
         return target.state.p_pos - (target.state.p_vel * coef)
 
     def estimate_target_pos_4(self, agent, target, coef=0.1):
+        """Estimates target position offset along the line from tracking agent to target.
+
+        Pulls the estimated position slightly towards the tracking agent by distance coef.
+
+        Args:
+            agent (Agent): Tracking agent.
+            target (Agent): Target agent to track.
+            coef (float, optional): Distance to shift estimated position. Defaults to 0.1.
+
+        Returns:
+            np.ndarray: Estimated target position.
+        """
         delta = target.state.p_pos - agent.state.p_pos
         mag = np.linalg.norm(delta)
         new_target = (
@@ -200,6 +292,18 @@ class CircleSandboxBaseScenario(BaseScenario):
         return new_target
 
     def estimate_target_pos_5(self, agent, target, coef=0.2):
+        """Estimates target position by offsetting backwards along target's velocity unit vector.
+
+        Shifts the position in the opposite direction of the target's current movement.
+
+        Args:
+            agent (Agent): Tracking agent.
+            target (Agent): Target agent to track.
+            coef (float, optional): Distance coefficient to shift backwards. Defaults to 0.2.
+
+        Returns:
+            np.ndarray: Estimated target position.
+        """
         p_vel_mag = np.linalg.norm(target.state.p_vel)
         p_vel_u = target.state.p_vel / p_vel_mag if p_vel_mag > 0 else np.array([0, 0])
         new_vel = -coef * p_vel_u
@@ -293,111 +397,64 @@ class CircleSandboxBaseScenario(BaseScenario):
         if agent.state.p_vel[1] == 0:
             agent.state.p_vel[1] = 0.00001
 
-    def get_modulated_leader_callback(self):
-        """Generates the modulated leader trajectory callback.
+    def _compute_next_position(self, phase, scale=2 / 3):
+        """Computes the 2D coordinate on a circle from a given phase.
+
+        Args:
+            phase (float): The current phase step.
+            scale (float): Circle radius scale. Defaults to 2/3.
 
         Returns:
-            function: Action callback function.
+            np.ndarray: 2D coordinate vector.
         """
-        # phase accumulator for leader circle trajectory
-        phase = float(randint(1, 100))
-        # step counter for slow modulation frequency
-        step_count = 0
+        scaled_step = (phase / 50) * (2 * math.pi) * 0.75
+        return np.array([math.sin(scaled_step), math.cos(scaled_step)]) * scale
 
-        # goal activation tracking
-        active_goal_idx = -1
-        # countdown until next toggle
-        toggle_countdown = randrange(30, 60)
+    def _get_leader_callback_helper(self, modulated=False):
+        """Generates a trajectory callback for the leader.
+
+        Args:
+            modulated (bool): If True, modulates the speed dynamically. Defaults to False.
+
+        Returns:
+            callable: Action callback function.
+        """
+        phase = float(randint(1, 100))
+        direction = 1.0 if randint(0, 1) == 0 else -1.0
+        last_pos = None
 
         def cb(agent, world):
-            nonlocal phase, step_count, active_goal_idx, toggle_countdown, self
-            step_count += 1
-
-            # --- 1. Leader Speed & Direction Modulation ---
-            delta_phase = (
-                1.0 + 1.2 * math.sin(step_count * 0.05) + np.random.normal(0, 0.2)
-            )
-
-            last_phase = phase
-            phase += delta_phase
-
+            nonlocal phase, last_pos
             act = Action()
-            scale = 2 / 3
+            rng = randint(20, 70) if modulated else 50.0
+            phase += direction * (50.0 / rng)
 
-            # Calculate new position based on phase
-            scaled_step = (phase / 50) * (2 * math.pi) * 0.75
-            new_pos = (
-                np.array([math.sin(scaled_step), math.cos(scaled_step)]) * scale
-            )
+            new_pos = self._compute_next_position(phase)
             agent.state.p_pos = new_pos
 
-            # Calculate speed based on delta phase
-            last_scaled_step = (last_phase / 50) * (2 * math.pi) * 0.75
-            last_new_pos = (
-                np.array([math.sin(last_scaled_step), math.cos(last_scaled_step)])
-                * scale
-            )
-            agent.state.speed = new_pos - last_new_pos
+            if last_pos is not None:
+                agent.state.speed = new_pos - last_pos
+            else:
+                agent.state.speed = np.array([0.0, 0.0])
 
+            last_pos = new_pos
             act.u = np.zeros(2)
-
-            # --- 2. Randomized & Mutually Exclusive Goal Activation ---
-            goals = [ld for ld in world.landmarks if ld.type == "goal"]
-            toggle_countdown -= 1
-            if toggle_countdown <= 0:
-                if active_goal_idx != -1:
-                    goals[active_goal_idx].activate = False
-                    goals[active_goal_idx].color = np.array([0, 1, 0, 0.75])
-                    active_goal_idx = -1
-                    toggle_countdown = randrange(15, 30)
-                else:
-                    active_goal_idx = randrange(0, len(goals))
-                    for idx, goal in enumerate(goals):
-                        if idx == active_goal_idx:
-                            goal.activate = True
-                            goal.color = np.array([1, 1, 0, 0.75])
-                        else:
-                            goal.activate = False
-                            goal.color = np.array([0, 1, 0, 0.75])
-                    toggle_countdown = randrange(40, 80)
-
             return act
 
         return cb
+
+    def get_modulated_leader_callback(self):
+        """Generates the modulated leader trajectory callback with continuous phase noise.
+
+        Returns:
+            callable: Action callback function of signature `cb(agent, world) -> Action`.
+        """
+        return self._get_leader_callback_helper(modulated=True)
 
     def get_circle_leader_callback(self):
         """Generates the standard circular leader trajectory callback.
 
         Returns:
-            function: Action callback function.
+            callable: Action callback function of signature `cb(agent, world) -> Action`.
         """
-        STEPS_FOR_FULL_ROTATION = 50 / 0.75
-        step = randint(1, int(STEPS_FOR_FULL_ROTATION))
-
-        def cb(agent, world):
-            nonlocal step, self
-            step += 1
-            act = Action()
-
-            # Circle
-            scale = 2 / 3
-
-            scaled_step = (step / 50) * (2 * math.pi) * 0.75
-            new_pos = (
-                np.array([math.sin(scaled_step), math.cos(scaled_step)]) * scale
-            )
-            agent.state.p_pos = new_pos
-
-            last_scaled_step = ((step - 1) / 50) * (2 * math.pi) * 0.75
-            last_new_pos = (
-                np.array([math.sin(last_scaled_step), math.cos(last_scaled_step)])
-                * scale
-            )
-            agent.state.speed = new_pos - last_new_pos
-
-            act.u = np.zeros(2)
-
-            return act
-
-        return cb
-
+        return self._get_leader_callback_helper(modulated=False)

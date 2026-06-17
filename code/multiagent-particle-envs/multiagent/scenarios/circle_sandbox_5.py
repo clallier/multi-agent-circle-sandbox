@@ -6,7 +6,13 @@ from multiagent.scenarios.circle_sandbox_base import CircleSandboxBaseScenario
 class Scenario(CircleSandboxBaseScenario):
     """Scenario representing experiment 5 with logarithmic rewards and velocity/goal observations.
 
-    Inherits helper routines, world setup, and callback factories from CircleSandboxBaseScenario.
+    Compared to experiment 3 (try not to estimate the target position in the future, like in experiment 4),
+    each agent has a dedicated goal to reach.
+    - agent 0 is still the leader
+    - agent 1 follows the leader (agent_0) or goal_0
+    - agent 2 follows agent 1 or goal_1
+
+    Training for 25000 episodes instead of 5000.
     """
 
     def __init__(self):
@@ -15,26 +21,25 @@ class Scenario(CircleSandboxBaseScenario):
         self.nb_goals = 2
         self.nb_obstacles = 0
 
-    def get_angle(self, v1, v2):
-        return self.get_angle_unsigned(v1, v2)
-
     def reward(self, agent, world):
         """Computes the reward for a given agent in the world using logarithmic distance penalty."""
+
+        # follows the previous agent or its goal
         target_id = agent.id - 1
-        target = self.find_agent_by_id(world, target_id)
 
         # if the goal is activated, try to get it
-        landmark = self.find_entity_by_name(world, f"Goal {target_id}")
+        landmark = self.find_entity_by_name(world, f"goal_{target_id}")
         if landmark and landmark.activate:
             d = self.dist(agent.state.p_pos, landmark.state.p_pos)
-            reward = -math.log(d)
-        # else follow the leader
+
+        # else follow the previous agent
         else:
+            target = self.find_agent_by_id(world, target_id)
             target_pos = self.estimate_target_pos(agent, target)
             d = self.dist(agent.state.p_pos, target_pos)
-            d_norm = -math.log(d)
-            cos_sim = max(0, self.cos_sim(target.state.p_vel, agent.state.p_vel))
-            reward = 0.7 * d_norm + 0.3 * cos_sim
+
+        # penalize distance from target
+        reward = -math.log(d)
         return reward
 
     def observation(self, agent, world):
@@ -47,6 +52,7 @@ class Scenario(CircleSandboxBaseScenario):
         vx = agent.state.p_vel[0]
         vy = agent.state.p_vel[1]
 
+        # follow previous agent or its goal
         target_id = agent.id - 1
 
         # target distance
@@ -58,8 +64,8 @@ class Scenario(CircleSandboxBaseScenario):
             tg_vx = target.state.p_vel[0]
             tg_vy = target.state.p_vel[1]
 
-        # agent's goal
-        lm = self.find_entity_by_name(world, f"Goal {target_id}")
+        # active landmark
+        lm = self.find_entity_by_name(world, f"goal_{target_id}")
         if lm:
             lm_dx = lm.state.p_pos[0] - agent.state.p_pos[0]
             lm_dy = lm.state.p_pos[1] - agent.state.p_pos[1]
@@ -67,4 +73,3 @@ class Scenario(CircleSandboxBaseScenario):
 
         # return the complete state
         return np.array([vx, vy, tg_dx, tg_dy, tg_vx, tg_vy, lm_dx, lm_dy, lm_act])
-

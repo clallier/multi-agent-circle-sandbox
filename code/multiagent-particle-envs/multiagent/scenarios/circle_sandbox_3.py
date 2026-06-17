@@ -4,7 +4,10 @@ from multiagent.scenarios.circle_sandbox_base import CircleSandboxBaseScenario
 
 
 class Scenario(CircleSandboxBaseScenario):
-    """Scenario representing experiment 3, incorporating a single goal that can activate."""
+    """Scenario representing experiment 3, incorporating a single goal that can activate.
+
+    Compared to experiment 2, the reward takes into account the current agent's target (leader or activated goal).
+    """
 
     def __init__(self):
         super().__init__()
@@ -15,7 +18,7 @@ class Scenario(CircleSandboxBaseScenario):
     def reward(self, agent, world):
         """Computes reward based on distance to goal if active, otherwise distance to leader."""
         # if the goal is activated, try to get it
-        lm0 = self.find_entity_by_name(world, "Goal 0")
+        lm0 = self.find_entity_by_name(world, "goal_0")
         if lm0 and lm0.activate:
             a_dist = self.dist(agent.state.p_pos, lm0.state.p_pos)
         else:
@@ -38,7 +41,7 @@ class Scenario(CircleSandboxBaseScenario):
         dy = leader.state.p_pos[1] + leader.state.speed[1] - agent.state.p_pos[1]
 
         # agent's goal
-        lm0 = self.find_entity_by_name(world, "Goal 0")
+        lm0 = self.find_entity_by_name(world, "goal_0")
         if lm0:
             lm0_dx = lm0.state.p_pos[0] - agent.state.p_pos[0]
             lm0_dy = lm0.state.p_pos[1] - agent.state.p_pos[1]
@@ -46,4 +49,3 @@ class Scenario(CircleSandboxBaseScenario):
 
         # return the complete state
         return np.array([vx, vy, dx, dy, lm0_dx, lm0_dy, lm0_act])
-

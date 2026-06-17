@@ -6,27 +6,31 @@ from multiagent.scenarios.circle_sandbox_base import CircleSandboxBaseScenario
 class Scenario(CircleSandboxBaseScenario):
     """Scenario representing experiment 7 with logarithmic rewards and velocity/goal observations.
 
-    Inherits helper routines, world setup, and callback factories from CircleSandboxBaseScenario.
+    Compared to scenario 6, we now have 3 follower agents and 3 goals (one for each agent).
+
+    Training for 20000 episodes instead of 10000.
     """
 
     def __init__(self):
         super().__init__()
-        self.nb_agents = 3  # including the leader
-        self.nb_goals = 2
+        self.nb_agents = 4  # including the leader
+        self.nb_goals = 3
         self.nb_obstacles = 0
 
     def reward(self, agent, world):
         """Computes the reward for a given agent in the world using logarithmic distance penalty."""
+
+        # follows the previous agent or its goal
         target_id = agent.id - 1
-        target = self.find_agent_by_id(world, target_id)
 
         # if the goal is activated, try to get it
-        landmark = self.find_entity_by_name(world, f"Goal {target_id}")
+        landmark = self.find_entity_by_name(world, f"goal_{target_id}")
         if landmark and landmark.activate:
             d = self.dist(agent.state.p_pos, landmark.state.p_pos)
             reward = -math.log(d)
-        # else follow the leader
+        # else follows the previous agent
         else:
+            target = self.find_agent_by_id(world, target_id)
             target_pos = self.estimate_target_pos(agent, target)
             d = self.dist(agent.state.p_pos, target_pos)
             d_norm = -math.log(d)
@@ -44,6 +48,7 @@ class Scenario(CircleSandboxBaseScenario):
         vx = agent.state.p_vel[0]
         vy = agent.state.p_vel[1]
 
+        # follows the previous agent
         target_id = agent.id - 1
 
         # target distance
@@ -55,8 +60,8 @@ class Scenario(CircleSandboxBaseScenario):
             tg_vx = target.state.p_vel[0]
             tg_vy = target.state.p_vel[1]
 
-        # agent's goal
-        lm = self.find_entity_by_name(world, f"Goal {target_id}")
+        # landmark status
+        lm = self.find_entity_by_name(world, f"goal_{target_id}")
         if lm:
             lm_dx = lm.state.p_pos[0] - agent.state.p_pos[0]
             lm_dy = lm.state.p_pos[1] - agent.state.p_pos[1]
@@ -64,4 +69,3 @@ class Scenario(CircleSandboxBaseScenario):
 
         # return the complete state
         return np.array([vx, vy, tg_dx, tg_dy, tg_vx, tg_vy, lm_dx, lm_dy, lm_act])
-
