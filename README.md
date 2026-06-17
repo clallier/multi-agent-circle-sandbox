@@ -19,7 +19,7 @@ Over the course of 10 incremental experiments, the observation spaces, reward fo
 | **3** | Single follower + 1 active/inactive goal | Same + goal $dx, dy, state$ | Logarithmic distance to target/goal | 5k episodes | 157.4 | ![](docs/gifs/experiment_3.gif) |
 | **4** | Single follower + leader future position estimation | Same as Exp. 3 | Logarithmic distance to estimated future position | 5k episodes | 146.1 | ![](docs/gifs/experiment_4.gif) |
 | **5** | Chain of 2 followers + 2 active/inactive goals | Same as Exp. 3 | Same as Exp. 3 | 25k episodes | 397.5 | ![](docs/gifs/experiment_5.gif) |
-| **6** | Chain of 2 followers + velocity alignment reward | Target $dx, dy$ + goal info + velocity differences | Weighted: $0.7 \cdot \text{distance} + 0.3 \cdot \text{cos-sim}(v_{\text{agent}}, v_{\text{target}})$ | 10k episodes | 301.1 | ![](docs/gifs/experiment_6.gif) |
+| **6** | Chain of 2 followers + velocity alignment reward | Target $dx, dy$ + goal info + velocity differences | Weighted: $0.7 \cdot \text{distance}$ + $0.3 \cdot \text{cos-sim}(v_{\text{agent}}, v_{\text{target}})$ | 10k episodes | 301.1 | ![](docs/gifs/experiment_6.gif) |
 | **7** | Chain of 3 followers + 3 goals + chain velocity alignment | Same as Exp. 6 | Same as Exp. 6 | 20k episodes | 541.4 | ![](docs/gifs/experiment_7.gif) |
 | **8** | Chain of 3 followers + 3 goals + shared active goal + random leader speed | Same as Exp. 6 | Same as Exp. 6 | 100k episodes | 494.4 | ![](docs/gifs/experiment_8.gif) |
 | **9** | Chain of 3 followers + 3 goals + Bounded Exponential Decay rewards | Same as Exp. 6 | Same as Exp. 6 with Bounded Exponential Decay: $e^{-d/\sigma_d}$ | 100k episodes | 166.0 | ![](docs/gifs/experiment_9.gif) |
