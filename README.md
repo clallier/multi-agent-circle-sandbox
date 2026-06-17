@@ -1,6 +1,6 @@
 # Multi-Agent Reinforcement Learning Sandbox
 
-![](docs/gifs/experiment_5.gif)
+![](docs/gifs/experiment_6.gif)
 
 Welcome to the **multi-agent-maddpg-sandbox** project. This repository contains an experiment focused on Multi-Agent Reinforcement Learning (MARL). Specifically, it utilizes the Multi-Agent Deep Deterministic Policy Gradient (MADDPG) algorithm to train multiple agents in a custom particle-based sandbox environment.
 
