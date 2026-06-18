@@ -1,87 +1,135 @@
 from random import randrange
+from multiagent import palette
 import numpy as np
 
 
-# physical/external base state of all entites
 class EntityState(object):
+    """Physical and external base state of all entities.
+
+    This class encapsulates physical state attributes shared by all simulator entities.
+
+    Attributes:
+        p_pos (np.ndarray): Physical 2D position in space.
+        p_vel (np.ndarray): Physical 2D velocity vector.
+    """
+
     def __init__(self):
-        # physical position
         self.p_pos = None
-        # physical velocity
         self.p_vel = None
 
 
-# state of agents (including communication and internal/mental state)
 class AgentState(EntityState):
+    """State of agents, extending EntityState with communication/mental properties.
+
+    This class encapsulates both the physical attributes and the communicative/mental state of an agent.
+
+    Attributes:
+        c (np.ndarray): Communication utterance signal.
+    """
+
     def __init__(self):
         super(AgentState, self).__init__()
-        # communication utterance
         self.c = None
 
 
-# action of the agent
 class Action(object):
+    """Encapsulates the action choices of an agent.
+
+    This class represents action commands executed by agents in physical and communication domains.
+
+    Attributes:
+        u (np.ndarray): Physical action command.
+        c (np.ndarray): Communication action command.
+    """
+
     def __init__(self):
-        # physical action
         self.u = None
-        # communication action
         self.c = None
 
 
-# properties and state of physical world entity
 class Entity(object):
+    """Properties and state of a physical world entity.
+
+    Base class for all physical entities present in the simulation environment.
+
+    Attributes:
+        name (str): Unique identifying name.
+        size (float): Radius size of the entity.
+        movable (bool): Indicates if the entity is movable.
+        collide (bool): Indicates if the entity collides with others.
+        density (float): Material density affecting mass computation.
+        color (np.ndarray): Color of the entity.
+        type (str): Type categorization, e.g. "landmark", "goal", "obstacle".
+        max_speed (float): Maximum allowed velocity speed limit.
+        accel (float): Acceleration limit.
+        state (EntityState): Core state representation.
+        initial_mass (float): Base mass of the entity.
+    """
+
     def __init__(self):
-        # name
         self.name = ""
-        # properties:
         self.size = 0.050
-        # entity can move / be pushed
         self.movable = False
-        # entity collides with others
         self.collide = True
-        # material density (affects mass)
         self.density = 25.0
-        # color
         self.color = None
-        # type: default "landmark", can be "goal" or "obstacle"
         self.type = "landmark"
-        # max speed and accel
         self.max_speed = None
         self.accel = None
-        # state
         self.state = EntityState()
-        # mass
         self.initial_mass = 1.0
 
     @property
     def mass(self):
+        """Computes the mass of the entity.
+
+        Returns:
+            float: Initial mass of the entity.
+        """
         return self.initial_mass
 
 
-# properties of landmark entities
 class Landmark(Entity):
+    """Properties of landmark entities.
+
+    A stationary landmark in the world that can represent a target, goal, or obstacle.
+
+    Attributes:
+        activate (bool): Current activation status of the landmark.
+        deactivation_time (int): Steps before deactivating a landmark.
+        next_activate_time_min (int): Minimum steps before next activation.
+        next_activate_time_max (int): Maximum steps before next activation.
+        activate_time (int): Target step counter at which the landmark state toggles.
+        activate_count (int): Counter tracking steps since last state change.
+        activate_prob (float): Probability parameter for activation state.
+    """
+
     def __init__(self):
         super(Landmark, self).__init__()
         self.activate = False
         self.deactivation_time = 30
         self.next_activate_time_min = 5
         self.next_activate_time_max = 10
-
         self.activate_time = randrange(
             self.next_activate_time_min, self.next_activate_time_max
         )
-
         self.activate_count = 1
         self.activate_prob = 0.1
         self.type = "landmark"
-        self.color = np.array([0, 1, 0, 0.75])
+        self.color = np.array(palette.TARGET_BASE)
 
     def goal_activate(self):
+        """Ticks the landmark state and toggles goal activation color based on step intervals.
+
+        How it works:
+            If this landmark is a goal, ticks self.activate_count. Upon reaching
+            self.activate_time, toggles the activation state, changes the target color,
+            and resets the activation timing window.
+        """
         if self.type != "goal":
             return
         if self.activate_count > 0 and self.activate_count < self.activate_time:
             self.activate_count += 1
-
         elif self.activate_count >= self.activate_time:
             self.activate_count = 1
             if not self.activate:
@@ -89,96 +137,131 @@ class Landmark(Entity):
                 self.activate_time = randrange(
                     self.next_activate_time_min, self.next_activate_time_max
                 )
-                self.color = np.array([1, 1, 0, 0.75])
+                self.color = np.array(palette.TARGET_ACTIVATED)
             else:
                 self.activate = False
                 self.activate_time = self.deactivation_time
-                self.color = np.array([0, 1, 0, 0.75])
+                self.color = np.array(palette.TARGET_BASE)
 
 
-# properties of agent entities
 class Agent(Entity):
+    """Properties of agent entities.
+
+    An active physical agent in the multi-agent sandbox.
+
+    Attributes:
+        id (int): Numerical identifier.
+        movable (bool): Indicates if the agent can move (True by default).
+        silent (bool): Communication signal restriction.
+        blind (bool): Observation restriction.
+        u_noise (float): Physical motor noise.
+        c_noise (float): Communication noise.
+        u_range (float): Control output bounds range.
+        state (AgentState): Current agent state.
+        action (Action): Last selected action.
+        action_callback (callable): Scripted behavior function.
+        prev_state (AgentState): Historical previous agent state.
+    """
+
     def __init__(self):
         super(Agent, self).__init__()
         self.id = -1
-        # agents are movable by default
         self.movable = True
-        # cannot send communication signals
         self.silent = False
-        # cannot observe the world
         self.blind = False
-        # physical motor noise amount
         self.u_noise = None
-        # communication noise amount
         self.c_noise = None
-        # control range
         self.u_range = 1.0
-        # state
         self.state = AgentState()
-        # action
         self.action = Action()
-        # script behavior to execute
         self.action_callback = None
         self.prev_state = AgentState()
 
 
-# multi-agent world
 class World(object):
+    """Multi-agent simulation environment world.
+
+    Manages all agents, landmarks, laws of physics, collisions, and state steps.
+
+    Attributes:
+        agents (list[Agent]): Active agents list.
+        landmarks (list[Landmark]): Stationary landmarks list.
+        dim_c (int): Dimensions of communication channel.
+        dim_p (int): Dimensions of position channel (2D).
+        dim_color (int): Dimensions of color components (3).
+        dt (float): Simulation timestep duration.
+        damping (float): Friction damping coefficient.
+        contact_force (float): Collision repulsion magnitude force.
+        contact_margin (float): Penetration margin distance threshold.
+    """
+
     def __init__(self):
-        # list of agents and entities (can change at execution-time!)
         self.agents = []
         self.landmarks = []
-        # communication channel dimensionality
         self.dim_c = 0
-        # position dimensionality
         self.dim_p = 2
-        # color dimensionality
         self.dim_color = 3
-        # simulation timestep
         self.dt = 0.1
-        # physical damping
         self.damping = 0.25
-        # contact response parameters (add stronger collision response: 100 -> 500)
         self.contact_force = 5e2
         self.contact_margin = 1e-3
 
-    # return all entities in the world
     @property
     def entities(self):
+        """Returns all entities in the simulation world.
+
+        Returns:
+            list[Entity]: Concatenated list of agents and landmarks.
+        """
         return self.agents + self.landmarks
 
-    # return all agents controllable by external policies
     @property
     def policy_agents(self):
+        """Returns agents controllable by external neural network/RL policies.
+
+        Returns:
+            list[Agent]: All agents without a scripted callback.
+        """
         return [agent for agent in self.agents if agent.action_callback is None]
 
-    # return all agents controlled by world scripts
     @property
     def scripted_agents(self):
+        """Returns agents controlled by hardcoded world script callbacks.
+
+        Returns:
+            list[Agent]: All agents with a scripted callback.
+        """
         return [agent for agent in self.agents if agent.action_callback is not None]
 
-    # update state of the world
     def step(self):
-        # set actions for scripted agents
+        """Advances the simulation world by one physical step.
+
+        How it works:
+            1. Computes actions for scripted agents.
+            2. Applies physical actions and environment collision forces.
+            3. Integrates state equations to calculate new positions and velocities.
+            4. Updates internal agent properties and landmark activation.
+        """
         for agent in self.scripted_agents:
             agent.action = agent.action_callback(agent, self)
-        # gather forces applied to entities
         p_force = [None] * len(self.entities)
-        # apply agent physical controls
         p_force = self.apply_action_force(p_force)
-        # apply environment forces
         p_force = self.apply_environment_force(p_force)
-        # integrate physical state
         self.integrate_state(p_force)
-        # update agent state
         for agent in self.agents:
             self.update_agent_state(agent)
         for landmark in self.landmarks:
             landmark.goal_activate()
 
-    # gather agent action forces
     def apply_action_force(self, p_force):
-        # set applied forces
+        """Gathers and maps agent action controls to force vectors.
+
+        Args:
+            p_force (list): Initialized force list to modify.
+
+        Returns:
+            list: Force list populated with action vectors and motor noise.
+        """
         for i, agent in enumerate(self.agents):
             if agent.movable:
                 noise = (
@@ -189,9 +272,15 @@ class World(object):
                 p_force[i] = agent.action.u + noise
         return p_force
 
-    # gather physical forces acting on entities
     def apply_environment_force(self, p_force):
-        # simple (but inefficient) collision response
+        """Gathers physical environmental collision forces acting on all entities.
+
+        Args:
+            p_force (list): Populated action force list.
+
+        Returns:
+            list: Combined action and collision force list.
+        """
         for a, entity_a in enumerate(self.entities):
             for b, entity_b in enumerate(self.entities):
                 if b <= a:
@@ -207,8 +296,12 @@ class World(object):
                     p_force[b] = f_b + p_force[b]
         return p_force
 
-    # integrate physical state
     def integrate_state(self, p_force):
+        """Integrates physical acceleration, velocity, and position equations.
+
+        Args:
+            p_force (list): Total force vectors acting on entities.
+        """
         for i, entity in enumerate(self.entities):
             if not entity.movable:
                 continue
@@ -231,7 +324,11 @@ class World(object):
             entity.state.p_pos += entity.state.p_vel * self.dt
 
     def update_agent_state(self, agent):
-        # set communication state (directly for now)
+        """Updates communication status and noise filters of an agent.
+
+        Args:
+            agent (Agent): Agent entity to update.
+        """
         if agent.silent:
             agent.state.c = np.zeros(self.dim_c)
         else:
@@ -242,18 +339,23 @@ class World(object):
             )
             agent.state.c = agent.action.c + noise
 
-    # get collision forces for any contact between two entities
     def get_collision_force(self, entity_a, entity_b):
+        """Computes contact forces between two colliding/intersecting entities.
+
+        Args:
+            entity_a (Entity): First entity.
+            entity_b (Entity): Second entity.
+
+        Returns:
+            list[np.ndarray | None]: Force vectors exerted on [entity_a, entity_b].
+        """
         if (not entity_a.collide) or (not entity_b.collide):
-            return [None, None]  # not a collider
+            return [None, None]
         if entity_a is entity_b:
-            return [None, None]  # don't collide against itself
-        # compute actual distance between entities
+            return [None, None]
         delta_pos = entity_a.state.p_pos - entity_b.state.p_pos
         dist = np.sqrt(np.sum(np.square(delta_pos)))
-        # minimum allowable distance
         dist_min = entity_a.size + entity_b.size
-        # softmax penetration
         k = self.contact_margin
         penetration = np.logaddexp(0, -(dist - dist_min) / k) * k
         force = self.contact_force * delta_pos / dist * penetration

@@ -1,6 +1,7 @@
 import gym
 from gym import spaces
 import numpy as np
+import math
 from multiagent.multi_discrete import MultiDiscrete
 from matplotlib import cm
 import matplotlib.pyplot as plt
@@ -322,40 +323,44 @@ class MultiAgentEnv(gym.Env):
                 from multiagent import rendering
 
                 self.viewers[i] = rendering.Viewer(700, 700)
+        # create rendering geometry on every frame to support dynamic pill shapes
+        from multiagent import rendering
 
-        # create rendering geometry
-        if self.render_geoms is None:
-            # import rendering only if we need it (and don't import for headless machines)
-            # from gym.envs.classic_control import rendering
-            from multiagent import rendering
-
-            self.render_geoms = []
-            self.render_geoms_xform = []
-            for entity in self.world.entities:
+        self.render_geoms = []
+        self.render_geoms_xform = []
+        for entity in self.world.entities:
+            xform = rendering.Transform()
+            if "agent" in entity.name:
+                vx, vy = entity.state.p_vel
+                speed = math.hypot(vx, vy)
+                # Keep end caps perfectly circular; scale only middle section length.
+                length = speed * 0.1
+                geom = rendering.make_pill(length, 2 * entity.size)
+            else:
                 geom = rendering.make_circle(entity.size)
-                xform = rendering.Transform()
-                if "agent" in entity.name:
-                    if len(entity.color) == 4:
-                        geom.set_color(*entity.color)
-                    else:
-                        geom.set_color(*entity.color, alpha=0.5)
-                else:
-                    geom.set_color(*entity.color)
-                geom.add_attr(xform)
-                self.render_geoms.append(geom)
-                self.render_geoms_xform.append(xform)
 
-            # add geoms to viewer (landmarks first, then agents, for z-indexing)
-            for viewer in self.viewers:
-                viewer.geoms = []
-                # First add non-agent entities (landmarks/obstacles)
-                for e, entity in enumerate(self.world.entities):
-                    if "agent" not in entity.name:
-                        viewer.add_geom(self.render_geoms[e])
-                # Then add agent entities on top
-                for e, entity in enumerate(self.world.entities):
-                    if "agent" in entity.name:
-                        viewer.add_geom(self.render_geoms[e])
+            if "agent" in entity.name:
+                if len(entity.color) == 4:
+                    geom.set_color(*entity.color)
+                else:
+                    geom.set_color(*entity.color, alpha=0.5)
+            else:
+                geom.set_color(*entity.color)
+            geom.add_attr(xform)
+            self.render_geoms.append(geom)
+            self.render_geoms_xform.append(xform)
+
+        # add geoms to viewer (landmarks first, then agents, for z-indexing)
+        for viewer in self.viewers:
+            viewer.geoms = []
+            # First add non-agent entities (landmarks/obstacles)
+            for e, entity in enumerate(self.world.entities):
+                if "agent" not in entity.name:
+                    viewer.add_geom(self.render_geoms[e])
+            # Then add agent entities on top
+            for e, entity in enumerate(self.world.entities):
+                if "agent" in entity.name:
+                    viewer.add_geom(self.render_geoms[e])
 
         # update colors in real time
         for e, entity in enumerate(self.world.entities):
@@ -365,9 +370,8 @@ class MultiAgentEnv(gym.Env):
                 else:
                     self.render_geoms[e].set_color(*entity.color, alpha=0.5)
             else:
-                self.render_geoms[e].set_color(
-                    *entity.color
-                )  # , alpha=1 if entity.visible else 0)
+                self.render_geoms[e].set_color(*entity.color)
+
         results = []
         for i in range(len(self.viewers)):
             from multiagent import rendering
@@ -387,6 +391,12 @@ class MultiAgentEnv(gym.Env):
             # update geometry positions
             for e, entity in enumerate(self.world.entities):
                 self.render_geoms_xform[e].set_translation(*entity.state.p_pos)
+                if "agent" in entity.name:
+                    vx, vy = entity.state.p_vel
+                    speed = math.hypot(vx, vy)
+                    if speed > 0.01:
+                        angle = math.atan2(vy, vx)
+                        self.render_geoms_xform[e].set_rotation(angle)
             # render to display or array
             results.append(self.viewers[i].render(return_rgb_array=mode == "rgb_array"))
 

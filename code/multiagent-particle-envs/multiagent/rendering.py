@@ -31,6 +31,7 @@ except ImportError as e:
     )
 
 import math
+from multiagent import palette
 import numpy as np
 
 RAD2DEG = 57.29577951308232
@@ -99,7 +100,7 @@ class Viewer(object):
         self.onetime_geoms.append(geom)
 
     def render(self, return_rgb_array=False):
-        glClearColor(0.15, 0.15, 0.15, 1)
+        glClearColor(*palette.BACKGROUND)
         self.window.clear()
         self.window.switch_to()
         self.window.dispatch_events()
@@ -287,18 +288,6 @@ class FilledPolygon(Geom):
             glVertex3f(p[0], p[1], 0)  # draw each vertex
         glEnd()
 
-        color = (
-            self._color.vec4[0] * 0.5,
-            self._color.vec4[1] * 0.5,
-            self._color.vec4[2] * 0.5,
-            self._color.vec4[3] * 0.5,
-        )
-        glColor4f(*color)
-        glBegin(GL_LINE_LOOP)
-        for p in self.v:
-            glVertex3f(p[0], p[1], 0)  # draw each vertex
-        glEnd()
-
 
 def make_circle(radius=10, res=30, filled=True):
     points = []
@@ -330,6 +319,34 @@ def make_capsule(length, width):
     circ1.add_attr(Transform(translation=(length, 0)))
     geom = Compound([box, circ0, circ1])
     return geom
+
+
+def make_pill(length, width, res=30):
+    """Creates a pill (capsule) geometry starting from (0, 0) as its head, extending backwards.
+
+    Args:
+        length (float): The length of the straight trailing section.
+        width (float): The diameter of the circular head/tail ends (radius = width / 2).
+        res (int): Resolution (number of vertices in the circle caps).
+
+    Returns:
+        FilledPolygon: A single filled polygon representing the pill shape.
+    """
+    r = width / 2.0
+    points = []
+
+    # Right cap (head): angle from -pi/2 to pi/2 centered at (0, 0)
+    half_res = res // 2
+    for i in range(half_res + 1):
+        ang = -math.pi / 2.0 + math.pi * i / half_res
+        points.append((math.cos(ang) * r, math.sin(ang) * r))
+
+    # Left cap (tail): angle from pi/2 to 3*pi/2 centered at (-length, 0)
+    for i in range(half_res + 1):
+        ang = math.pi / 2.0 + math.pi * i / half_res
+        points.append((-length + math.cos(ang) * r, math.sin(ang) * r))
+
+    return FilledPolygon(points)
 
 
 class Compound(Geom):

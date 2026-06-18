@@ -2,6 +2,7 @@ from random import randint, randrange
 import numpy as np
 import math
 from multiagent.core import World, Agent, Landmark, Action
+from multiagent import palette
 from multiagent.scenario import BaseScenario
 
 
@@ -62,7 +63,12 @@ class CircleSandboxBaseScenario(BaseScenario):
             agent.name = "agent_%d" % i
             agent.id = i
             agent.collide = True
-            agent.color = [1, 1, 0, 0.75]
+            if i == 0:
+                agent.color = list(palette.LEADER_BASE)
+            else:
+                agent.color = palette.get_lighter_color(
+                    palette.AGENT_BASE, (i - 1) * palette.AGENT_LIGHTER_FACTOR
+                )
             agent.silent = True
             agent.size = 0.1
 
@@ -71,7 +77,7 @@ class CircleSandboxBaseScenario(BaseScenario):
         for i, goal in enumerate(goals):
             goal.name = "goal_%d" % i
             goal.type = "goal"
-            goal.color = [1, 0, 0, 0.75]
+            goal.color = list(palette.TARGET_BASE)
             goal.collide = False
             goal.movable = False
             goal.size = 0.2
@@ -83,7 +89,7 @@ class CircleSandboxBaseScenario(BaseScenario):
             obstacle.type = "obstacle"
             obstacle.collide = True
             obstacle.movable = False
-            obstacle.color = [1, 1, 1, 0.75]
+            obstacle.color = [1.0, 1.0, 1.0, 1.0]
             obstacle.size = 0.1
 
         world.landmarks = goals + obstacles
@@ -136,7 +142,6 @@ class CircleSandboxBaseScenario(BaseScenario):
         """
         # random properties for agents
         for i, agent in enumerate(world.agents):
-            agent.color = np.array([0, 0, 1, 1])
             agent.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
             agent.state.p_vel = np.zeros(world.dim_p)
             agent.state.c = np.zeros(world.dim_c)
@@ -148,26 +153,27 @@ class CircleSandboxBaseScenario(BaseScenario):
                 agent.action_callback = self.create_leader_callback()
                 agent.action_callback(agent, world)
                 agent.size = 0.1
-                agent.color = [0, 0, 1, 0.75]
+                agent.color = list(palette.LEADER_BASE)
             else:
                 # others are learning agents
                 agent.size = 0.05
-                agent.color = [0.2 * i, 0, 1, 0.75]
+                agent.color = palette.get_lighter_color(
+                    palette.AGENT_BASE, (i - 1) * palette.AGENT_LIGHTER_FACTOR
+                )
 
         goals = [ld for ld in world.landmarks if ld.type == "goal"]
         obstacles = [ld for ld in world.landmarks if ld.type == "obstacle"]
 
         for i, goal in enumerate(goals):
-            goal.color = np.array([1, 1, 0, 0.75])
             goal.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
             goal.state.p_vel = np.zeros(world.dim_p)
-            goal.color = np.array([0, 1, 0, 0.75])
+            goal.color = np.array(palette.TARGET_BASE)
             goal.activate = False
             # default activate_time setting, can be disabled/overridden in subclass
             self.configure_goal_timing(goal, i, len(goals))
 
         for obstacle in obstacles:
-            obstacle.color = np.array([1, 1, 1, 0.75])
+            obstacle.color = np.array([1.0, 1.0, 1.0, 1.0])
             obstacle.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
             obstacle.state.p_vel = np.zeros(world.dim_p)
 
@@ -434,8 +440,10 @@ class CircleSandboxBaseScenario(BaseScenario):
 
             if last_pos is not None:
                 agent.state.speed = new_pos - last_pos
+                agent.state.p_vel = (new_pos - last_pos) / world.dt
             else:
                 agent.state.speed = np.array([0.0, 0.0])
+                agent.state.p_vel = np.array([0.0, 0.0])
 
             last_pos = new_pos
             act.u = np.zeros(2)
