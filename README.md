@@ -84,7 +84,7 @@ To start training the agents (e.g. on scenario 9), run the following command. Th
 > We set the environment variable `KERAS_HOME=./.keras` to redirect cache files to a writable workspace directory to avoid sandbox/permission warnings.
 
 ```bash
-KERAS_HOME=./.keras uv run python code/maddpg/experiments/train.py --scenario circle_sandbox_9 --max-episode-len 80 --num-episodes 5000 --save-rate 200 --save-dir ./test_circle_sandbox_9/
+KERAS_HOME=./.keras uv run python code/maddpg/experiments/train.py --scenario circle_sandbox_9 --num-episodes 5000 --save-rate 200 --save-dir ./test_circle_sandbox_9/
 ```
 
 The script `scripts/record_scenarios.py` automates the training of all experiments (and exports videos and GIFs) for the scenarios defined in the inner config:
