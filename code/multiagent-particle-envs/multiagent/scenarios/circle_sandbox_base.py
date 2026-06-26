@@ -65,12 +65,13 @@ class CircleSandboxBaseScenario(BaseScenario):
             agent.collide = True
             if i == 0:
                 agent.color = list(palette.LEADER_BASE)
+                agent.size = palette.LEADER_SIZE
             else:
                 agent.color = palette.get_lighter_color(
                     palette.AGENT_BASE, (i - 1) * palette.AGENT_LIGHTER_FACTOR
                 )
+                agent.size = palette.AGENT_SIZE
             agent.silent = True
-            agent.size = 0.1
 
         # add goals
         goals = [Landmark() for _ in range(self.nb_goals)]
@@ -152,11 +153,11 @@ class CircleSandboxBaseScenario(BaseScenario):
                 agent.collide = False
                 agent.action_callback = self.create_leader_callback()
                 agent.action_callback(agent, world)
-                agent.size = 0.1
+                agent.size = palette.LEADER_SIZE
                 agent.color = list(palette.LEADER_BASE)
             else:
                 # others are learning agents
-                agent.size = 0.05
+                agent.size = palette.AGENT_SIZE
                 agent.color = palette.get_lighter_color(
                     palette.AGENT_BASE, (i - 1) * palette.AGENT_LIGHTER_FACTOR
                 )

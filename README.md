@@ -10,10 +10,10 @@ This project aims to demonstrate and evaluate the coordination, cooperation, or 
 
 ## Experiment Results
 
-Over the course of 10 incremental experiments, the observation spaces, reward formulations, and agent behaviors were progressively refined to train a cooperative swarm of agents tracking a leader moving in a circle, avoiding collisions and adapting to active/inactive landmarks. 
+Over the course of 11 incremental experiments, the observation spaces, reward formulations, and agent behaviors were progressively refined to train a cooperative swarm of agents tracking a leader moving in a circle, avoiding collisions and adapting to active/inactive landmarks. 
 
 > [!NOTE]
-> - The training lengths are expressed in episodes (each episode is 200 timesteps long).
+> - The training lengths are expressed in episodes (each episode is 100 timesteps long).
 > - The Acc. Reward shows the accumulated rewards for all agents (which can be divided by the number of agents to get the average accumulated reward per agent).
 
 | Exp. | Description Objective | Observation Space | Reward Formulation | Training Length (ep.) | Acc. Reward | Visual Behavior |
@@ -28,6 +28,7 @@ Over the course of 10 incremental experiments, the observation spaces, reward fo
 | **8** | Chain of 3 followers + 3 goals + shared active goal + random leader speed | Same as Exp. 6 | Same as Exp. 6 | 100k | 494.4 | <img src="docs/gifs/experiment_8.gif" width="180" /> |
 | **9** | Chain of 3 followers + 3 goals + Bounded Exponential Decay rewards | Same as Exp. 6 | Same as Exp. 6 with Bounded Exponential Decay: $e^{-d/\sigma_d}$ | 100k | 166.0 | <img src="docs/gifs/experiment_9.gif" width="180" /> |
 | **10** | Chain of 3 followers + 3 goals + mutual agent collision awareness | Same as Exp. 6 + other agents pos/vel | Same as Exp. 6 with Bounded Exponential Decay | 100k | 167.3 | <img src="docs/gifs/experiment_10.gif" width="180" /> |
+| **11** | 10-agent boids swarm (1 leader + 9 followers) | Target relative position, leader metrics, average neighbor relative pos/alignment/speed | 40% target tracking, 15% neighbor angle alignment, 15% neighbor speed alignment, 30% coherence, separation penalty | 20k | 544 | <img src="docs/gifs/experiment_11.gif" width="180" /> |
 
 ### Takeaways
 1. **Follower Self-Velocity (Exp 1 vs. 2):** Including the follower's own velocity in the observation space directly improved tracking quality, increasing the accumulated reward from 242.9 to 311.5 by allowing the agent to perform smoother velocity matching.
@@ -39,6 +40,7 @@ Over the course of 10 incremental experiments, the observation spaces, reward fo
 7. **Shared Landmark Bottleneck (Exp 7 vs. 8):** In Exp 8, all 3 followers were trained to target the same shared active goal. This significantly increased the risk of collision and crowding at the single target. As a result, despite 5x more training ($100\text{k}$ episodes vs. $20\text{k}$ episodes), the accumulated reward dropped from 541.4 to 494.4, illustrating the difficulty of coordinating around a single spatial bottleneck.
 8. **Logarithmic vs. Exponential Decay Rewards (Exp 8 vs. 9):** Logarithmic rewards ($-\ln(d)$) are unbounded and tend to $+\infty$ as $d \to 0$, which mathematically incentivizes agents to overlap completely with their targets, exacerbating collisions. Bounded exponential decay rewards ($e^{-d/\sigma_d}$) cap the reward at $1.0$, removing this infinite overlap incentive and theoretically allowing collision avoidance to be learned. However, without explicit collision avoidance mechanics in Exp 9, frequent collisions still occurred in practice.
 9. **Mutual Agent Awareness (Exp 9 vs. 10):** Adding the relative positions and velocities of neighboring agents directly into the observation space was expected to help the swarm coordinate and reduce collisions. However, it achieved nearly identical reward levels (167.3 vs. 166.0) and did not improve collision avoidance in practice, highlighting that exposing neighbor states is insufficient without explicit collision penalties in the reward function.
+10. **Boids Swarm Dynamics (Exp 10 vs. 11):** Scaling up to 10 agents (1 leader and 9 followers) causes coordinate space representation complexity to blow up if neighbor states are exposed individually. In Exp 11, we compressed neighbor states using average local neighbor metrics (average relative position, average velocity angle, and average velocity magnitude) and formulated a Boids-style reward (angle alignment, speed alignment, coherence, and a separation penalty). Despite the massive increase in swarm size (from 3 followers to 9 followers), the agents successfully learned cohesive, collision-free flocking behavior in only 20k episodes, achieving an accumulated reward of 544 (60% of max per agent).
 
 ## Project Structure
 
@@ -102,6 +104,7 @@ SCENARIOS = [
     (8, 100000),
     (9, 100000),
     (10, 100000),
+    (11, 20000),
 ]
 ```
 

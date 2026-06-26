@@ -20,7 +20,6 @@ import train as maddpg_train
 import maddpg.common.tf_util as U
 
 
-
 # Ensure video and gif directories exist
 os.makedirs("docs/videos", exist_ok=True)
 os.makedirs("docs/gifs", exist_ok=True)
@@ -37,6 +36,7 @@ SCENARIOS = [
     (8, 100000),
     (9, 100000),
     (10, 100000),
+    (11, 20000),
 ]
 
 

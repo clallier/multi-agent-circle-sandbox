@@ -11,6 +11,8 @@ AGENT_BASE = (86 / 255.0, 163 / 255.0, 254 / 255.0, 1.0)  # #56a3fe
 LEADER_BASE = (120 / 255.0, 120 / 255.0, 253 / 255.0, 1.0)  # #5b94fd
 
 AGENT_LIGHTER_FACTOR = 0.1
+LEADER_SIZE = 0.1
+AGENT_SIZE = 0.05
 
 
 def get_lighter_color(color, factor):
